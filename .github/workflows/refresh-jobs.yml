@@ -1,0 +1,31 @@
+name: Refresh Open Jobs feeds
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      verify_runner_only:
+        description: Verify that this free runner can start without refreshing feeds
+        type: boolean
+        default: false
+permissions: {}
+concurrency:
+  group: open-jobs-source-refresh
+  cancel-in-progress: false
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify runner availability
+        run: node -e "console.log('Standard public GitHub runner is available')"
+      - name: Refresh due permitted feeds
+        if: ${{ !inputs.verify_runner_only }}
+        run: node scripts/refresh.mjs
+      - name: Check job search and source health
+        if: ${{ always() && !inputs.verify_runner_only }}
+        run: node scripts/check-site.mjs
