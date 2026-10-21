@@ -8,6 +8,10 @@ on:
         description: Verify that this free runner can start without refreshing feeds
         type: boolean
         default: false
+      run_minutes:
+        description: Maximum refresh duration (1–45 minutes; checkpoints resume next hour)
+        type: number
+        default: 45
 permissions: {}
 concurrency:
   group: open-jobs-source-refresh
@@ -25,6 +29,8 @@ jobs:
         run: node -e "console.log('Standard public GitHub runner is available')"
       - name: Refresh due permitted feeds
         if: ${{ !inputs.verify_runner_only }}
+        env:
+          REFRESH_RUN_MINUTES: ${{ inputs.run_minutes || 45 }}
         run: node scripts/refresh.mjs
       - name: Check job search and source health
         if: ${{ always() && !inputs.verify_runner_only }}
